@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  role Role @default(USER)
+  status UserStatus @default(active)
+  avatar String?
+  bio String?
+  phone String?
+  location String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen DateTime @default(now())
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+model Message {
+  id String @id @default(cuid())
+  content String
+  senderId String
+  recipientId String
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+  sender User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+}
